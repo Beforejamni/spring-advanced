@@ -24,11 +24,10 @@ public class AdminInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-        if(!(handler instanceof HandlerMethod)){
+        if(!(handler instanceof HandlerMethod handlerMethod)){
             return true;
         }
 
-        HandlerMethod handlerMethod = (HandlerMethod) handler;
 
         Admin admin = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getMethod(), Admin.class);
 
