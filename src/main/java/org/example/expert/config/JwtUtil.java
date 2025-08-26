@@ -1,11 +1,13 @@
 package org.example.expert.config;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.example.expert.domain.auth.exception.AuthException;
 import org.example.expert.domain.common.exception.ServerException;
 import org.example.expert.domain.user.enums.UserRole;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,11 +57,19 @@ public class JwtUtil {
         throw new ServerException("Not Found Token");
     }
 
+
+    //토큰의 유효성 검사
+
     public Claims extractClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+
+       try {
+           return Jwts.parserBuilder()
+                   .setSigningKey(key)
+                   .build()
+                   .parseClaimsJws(token)
+                   .getBody();
+       }catch (JwtException e) {
+           throw new AuthException("유효하지 않은 토큰입니다.");
+       }
     }
 }

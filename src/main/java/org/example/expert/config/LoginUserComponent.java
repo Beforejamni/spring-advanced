@@ -53,12 +53,8 @@ public class LoginUserComponent {
 
         String token = header.substring(BEARER_TOKEN.length());
 
-        try{
-            return  jwtUtil.extractClaims(token);
+        return  jwtUtil.extractClaims(token);
 
-        } catch (JwtException e) {
-            throw new AuthException("유효하지 않은 토큰입니다.");
-        }
     }
 
     private String hasRole(String role) {

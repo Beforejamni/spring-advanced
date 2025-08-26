@@ -49,13 +49,13 @@ public class AdminInterceptor implements HandlerInterceptor {
                 return true;
             }
 
-            log.warn("FORBIDDEN: path= {}, userId= {}, role = {}", request.getRequestURI(), userId,role);
+            log.warn("FORBIDDEN: path= {}, userId= {}, role = {}", request.getRequestURI(), userId, role);
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자만 접근이 가능합니다.");
             return false;
 
         }catch (AuthException e) {
 
-            log.warn("UNAUTHORIZED: path = {}, message = {}", request.getRequestURI(),e.getMessage());
+            log.warn("UNAUTHORIZED: path = {}, message = {}", request.getRequestURI(), "로그인이 필요합니다.");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
             return false;
         }
