@@ -1,21 +1,26 @@
 package org.example.expert.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.example.expert.domain.auth.exception.AuthException;
+import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.ServerException;
 import org.example.expert.domain.user.enums.UserRole;
+import org.example.expert.security.UserDetailServiceImpl;
+import org.example.expert.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
+
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
 
 @Slf4j(topic = "JwtUtil")
@@ -33,6 +38,7 @@ public class JwtUtil {
     @PostConstruct
     public void init() {
         byte[] bytes = Base64.getDecoder().decode(secretKey);
+        log.info("JWT key decoded length={}", bytes.length);
         key = Keys.hmacShaKeyFor(bytes);
     }
 
@@ -58,7 +64,7 @@ public class JwtUtil {
     }
 
 
-    //토큰의 유효성 검사
+
 
     public Claims extractClaims(String token) {
 
@@ -71,5 +77,35 @@ public class JwtUtil {
        }catch (JwtException e) {
            throw new AuthException("유효하지 않은 토큰입니다.");
        }
+    }
+
+    public Authentication getAuthentication(String token, UserDetailServiceImpl userDetailService) {
+
+        Claims claims = extractClaims(token);
+
+        Long userId = Long.valueOf(claims.getSubject());
+        String email = claims.get("email", String.class);
+
+        UserDetailsImpl userDetailsImpl = userDetailService.loadUserByUsername(email);
+
+        UserRole role = extractUserRoleFromUserAuthorities(userDetailsImpl.getAuthorities());
+
+        AuthUser authUser = new AuthUser( userId, email, role);
+
+        return new UsernamePasswordAuthenticationToken(authUser, null, userDetailsImpl.getAuthorities());
+
+    }
+
+    private UserRole extractUserRoleFromUserAuthorities(Collection<? extends GrantedAuthority> authorities) {
+
+
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a-> a.startsWith("ROLE_"))
+                .map(a -> a.substring(5))
+                .map(String::toUpperCase)
+                .map(UserRole::valueOf)
+                .findFirst()
+                .orElse(UserRole.USER);
     }
 }

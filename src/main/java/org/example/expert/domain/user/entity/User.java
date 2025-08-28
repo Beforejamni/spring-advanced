@@ -3,6 +3,7 @@ package org.example.expert.domain.user.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.expert.domain.auth.exception.AuthException;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.entity.Timestamped;
 import org.example.expert.domain.user.enums.UserRole;
@@ -34,6 +35,12 @@ public class User extends Timestamped {
     }
 
     public static User fromAuthUser(AuthUser authUser) {
+
+        if(authUser == null) {
+            throw new AuthException("로그인이 필요합니다.");
+        }
+
+
         return new User(authUser.getId(), authUser.getEmail(), authUser.getUserRole());
     }
 

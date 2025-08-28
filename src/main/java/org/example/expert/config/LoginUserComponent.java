@@ -1,12 +1,12 @@
 package org.example.expert.config;
 
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
 import org.example.expert.domain.auth.exception.AuthException;
-import org.springframework.http.HttpHeaders;
+import org.example.expert.domain.common.dto.AuthUser;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,51 +16,59 @@ import java.util.Locale;
 @Component
 public class LoginUserComponent {
 
-    private final static String BEARER_TOKEN = "Bearer ";
-    private final JwtUtil jwtUtil;
+    private Authentication getAuth() {
 
-    public Long getUserId(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        Claims claims = getClaims(request);
+        if(authentication == null || !authentication.isAuthenticated()) {
 
-        return Long.valueOf(claims.getSubject());
+            throw  new AuthException("인증 정보가 없습니다.");
+        }
+        return  authentication;
     }
 
+    public Long getUserId() {
 
+        Authentication authentication = getAuth();
 
-    public String getRole(HttpServletRequest request) {
+        Object principal = authentication.getPrincipal();
 
-        Claims claims = getClaims(request);
-
-        Object ob = claims.get("userRole");
-
-        if(ob == null){
-            throw new AuthException("권한 정보가 없습니다.");
+        if(principal instanceof AuthUser authUser) {
+            return authUser.getId();
         }
 
-        return hasRole(ob.toString());
-
+        throw new AuthException("유효한 사용자가 아닙니다.");
     }
 
 
+    public String getEmail() {
 
-    private Claims getClaims(HttpServletRequest request) {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        Authentication authentication = getAuth();
 
-        if(header == null || !header.startsWith(BEARER_TOKEN)) {
-            throw new AuthException("인증된 토큰이 없습니다.");
+        Object principal = authentication.getPrincipal();
+
+        if(principal instanceof  AuthUser authUser) {
+
+            return  authUser.getEmail();
         }
 
-        String token = header.substring(BEARER_TOKEN.length());
-
-        return  jwtUtil.extractClaims(token);
-
+        throw new AuthException("유효한 사용자가 아닙니다.");
     }
 
-    private String hasRole(String role) {
 
-        String upperCase = role.toUpperCase();
+    public String getRole() {
 
-        return upperCase.startsWith("ROLE_") ? upperCase : "ROLE_" + upperCase;
+        Authentication authentication =getAuth();
+
+        Object principal = authentication.getPrincipal();
+
+        if(principal instanceof AuthUser authUser) {
+
+            String role = authUser.getUserRole().name();
+
+            return  role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        }
+
+        throw  new AuthException("권한 정보가 없습니다.");
     }
 }

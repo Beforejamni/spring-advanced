@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.expert.domain.auth.exception.AuthException;
 import org.example.expert.domain.common.annotation.Admin;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
@@ -40,10 +39,9 @@ public class AdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        try {
-            Long userId = loginUser.getUserId(request);
+            Long userId = loginUser.getUserId();
 
-            String role =  loginUser.getRole(request);
+            String role =  loginUser.getRole();
 
             if(role.equals("ROLE_ADMIN")) {
                 return true;
@@ -53,12 +51,6 @@ public class AdminInterceptor implements HandlerInterceptor {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자만 접근이 가능합니다.");
             return false;
 
-        }catch (AuthException e) {
-
-            log.warn("UNAUTHORIZED: path = {}, message = {}", request.getRequestURI(), "로그인이 필요합니다.");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
-            return false;
-        }
     }
 
 }
